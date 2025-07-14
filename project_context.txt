@@ -1,0 +1,25 @@
+# iPark Project Context
+
+## Game Rules
+- 1x5 parking grid (horizontal row)
+- Car pool always has enough seats for all passengers, and colors match
+- Passengers board cars automatically; cars are removed when full
+- Player can manually remove cars (limited removals per level)
+- Win when all passengers are gone, parking grid and car pool are empty
+
+## UI Structure
+- Top: Passengers row with count
+- HUD: Removals left, Wins
+- Middle: Parking grid (1x5)
+- Bottom: Vehicle grid (n x n, compact)
+- Action button (Next Level/Restart) only shows on win/lose
+
+## Implementation Notes
+- Auto-boarding and auto-removal logic ensures win is always possible
+- Debug output for win condition and state
+- .gitignore is set up for Flutter best practices
+- No persistent lines or progress bars in the UI
+- All widgets are in `game_screen.dart`, `main.dart`, and `menu_screen.dart`
+
+## Last Updated
+- Context captured after full gameplay and UI review 
