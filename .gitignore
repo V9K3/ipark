@@ -1,0 +1,64 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub/
+build/
+
+# iOS
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/engine/
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/flutter_export_environment.xcconfig
+ios/Flutter/Flutter.podspec
+ios/ServiceDefinitions.json
+ios/Runner.xcworkspace/
+ios/Pods/
+ios/Podfile.lock
+
+# Android
+android/.gradle/
+android/captures/
+android/.idea/
+android/local.properties
+android/app/build/
+
+# Web
+web/.dart_tool/
+web/build/
+
+# macOS
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/build/
+
+# Windows
+windows/Flutter/ephemeral/
+windows/build/
+
+# Linux
+linux/Flutter/ephemeral/
+linux/build/
+
+# VS Code
+.vscode/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Others
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Coverage
+coverage/
+
+# Packages
+pubspec.lock
