@@ -20,6 +20,7 @@ class GameState extends ChangeNotifier {
   int numColors;
   List<Color> levelColors = [];
   int winCount = 0;
+  bool boardingInProgress = false;
 
   GameState({
     List<List<ParkingSpot>>? parkingGrid,
@@ -100,13 +101,13 @@ class GameState extends ChangeNotifier {
   }
 
   // Place a car from the pool into the first available empty slot and trigger auto-boarding for all cars
-  void placeCarInFirstAvailable(Car car) {
+  Future<void> placeCarInFirstAvailableAnimated(Car car) async {
     for (int row = 0; row < numRows; row++) {
       for (int col = 0; col < numCols; col++) {
         if (parkingGrid[row][col].car == null) {
           parkingGrid[row][col].car = car;
           carPool.remove(car);
-          _autoBoardAllCars();
+          await _autoBoardAllCarsAnimated();
           notifyListeners();
           return;
         }
@@ -114,8 +115,9 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  // After any car placement or car exit, auto-board for all cars and remove full cars
-  void _autoBoardAllCars() {
+  Future<void> _autoBoardAllCarsAnimated() async {
+    boardingInProgress = true;
+    notifyListeners();
     bool changed;
     do {
       changed = false;
@@ -123,7 +125,7 @@ class GameState extends ChangeNotifier {
         for (int col = 0; col < numCols; col++) {
           final car = parkingGrid[row][col].car;
           if (car == null) continue;
-          // Board as many matching passengers as possible
+          // Board as many matching passengers as possible, with delay
           while (!car.isFull() && waitingPassengers.isNotEmpty) {
             final nextPassenger = waitingPassengers.first;
             if (car.canAcceptPassenger(nextPassenger)) {
@@ -131,6 +133,8 @@ class GameState extends ChangeNotifier {
               waitingPassengers.removeFirst();
               score += 10;
               changed = true;
+              notifyListeners();
+              await Future.delayed(const Duration(milliseconds: 250));
             } else {
               break;
             }
@@ -139,20 +143,23 @@ class GameState extends ChangeNotifier {
           if (car.isFull()) {
             parkingGrid[row][col].car = null;
             changed = true;
+            notifyListeners();
+            await Future.delayed(const Duration(milliseconds: 250));
           }
         }
       }
-      // Debug: print state after each auto-board pass
       print('DEBUG: waitingPassengers: ${waitingPassengers.length}, carPool: ${carPool.length}, parkingGrid: ${_parkingGridCarCount()}');
     } while (changed);
-    // Remove all cars if no passengers are left
     if (waitingPassengers.isEmpty) {
       for (int row = 0; row < numRows; row++) {
         for (int col = 0; col < numCols; col++) {
           parkingGrid[row][col].car = null;
         }
       }
+      notifyListeners();
     }
+    boardingInProgress = false;
+    notifyListeners();
   }
 
   int _parkingGridCarCount() {
@@ -229,7 +236,7 @@ class GameState extends ChangeNotifier {
       carPool.add(parkingGrid[row][col].car!);
       parkingGrid[row][col].car = null;
       remainingChances--;
-      _autoBoardAllCars();
+      // _autoBoardAllCars(); // REMOVE this line, use animated version if needed
       notifyListeners();
     }
   }

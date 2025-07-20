@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:math';
 import '../../game/game_state.dart';
 import '../../game/car_model.dart';
+import '../../game/passenger_model.dart';
 
 class GameScreen extends StatelessWidget {
   const GameScreen({super.key});
@@ -19,6 +20,41 @@ class GameScreen extends StatelessWidget {
           final waitingCount = game.waitingPassengers.length;
           const double carTileSize = 44;
           final double gridSize = n * carTileSize + (n - 1) * 4;
+
+          // Curved, contiguous passenger queue
+          Widget buildCurvedPassengerQueue(List<Passenger> passengers) {
+            const double passengerDiameter = 30; // 30px diameter
+            const double mmToPx = 3.78; // 1mm ≈ 3.78px
+            const double gap = 0.1 * mmToPx; // 0.1mm gap ≈ 0.4px, use 1px for visibility
+            const int rowLength = 13;
+            List<Widget> children = [];
+            for (int i = 0; i < passengers.length; i++) {
+              final isOddRow = ((i ~/ rowLength) % 2 == 1);
+              if (i % rowLength == 0 && isOddRow) {
+                children.add(SizedBox(width: passengerDiameter / 2));
+              }
+              children.add(Container(
+                width: passengerDiameter,
+                height: passengerDiameter,
+                margin: EdgeInsets.only(
+                  right: ((i + 1) % rowLength == 0) ? 0 : gap,
+                  bottom: gap,
+                ),
+                decoration: BoxDecoration(
+                  color: (passengers[i] as Passenger).color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black26),
+                ),
+              ));
+            }
+            return Wrap(
+              direction: Axis.horizontal,
+              spacing: gap,
+              runSpacing: gap,
+              children: children,
+            );
+          }
+
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -26,33 +62,22 @@ class GameScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 12, bottom: 4),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(left: 16.0, right: 8.0),
+                      padding: EdgeInsets.only(left: 16.0, right: 8.0, top: 8.0),
                       child: Text('Passengers:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                     Expanded(
-                      child: SizedBox(
-                        height: 48,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: game.waitingPassengers
-                              .take(10)
-                              .map((p) => Container(
-                                    width: 30,
-                                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: p.color,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.black26),
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          buildCurvedPassengerQueue(game.waitingPassengers.take(25).toList().cast<Passenger>()),
+                        ],
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(right: 16.0, left: 8.0),
+                      padding: const EdgeInsets.only(right: 16.0, left: 8.0, top: 8.0),
                       child: Text('x $waitingCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
                   ],
@@ -93,7 +118,8 @@ class GameScreen extends StatelessWidget {
                           final car = spot.car;
                           final canRemove = car != null && game.remainingChances > 0;
                           return GestureDetector(
-                            onLongPress: canRemove
+                            onTap: null,
+                            onLongPress: game.boardingInProgress ? null : canRemove
                                 ? () {
                                     game.manuallyRemoveCar(0, col);
                                   }
@@ -156,8 +182,8 @@ class GameScreen extends StatelessWidget {
                           itemBuilder: (context, i) {
                             final car = carPool[i];
                             return GestureDetector(
-                              onTap: () {
-                                game.placeCarInFirstAvailable(car);
+                              onTap: game.boardingInProgress || car == null ? null : () async {
+                                await game.placeCarInFirstAvailableAnimated(car);
                               },
                               child: Container(
                                 width: carTileSize,
